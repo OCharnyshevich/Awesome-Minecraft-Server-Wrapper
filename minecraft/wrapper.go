@@ -1,9 +1,9 @@
 package minecraft
 
 import (
-	"AMSW/minecraft/events"
 	"context"
 	"fmt"
+	"github.com/OCharnyshevich/Awesome-Minecraft-Server-Wrapper/minecraft/events"
 	"io"
 	"time"
 )

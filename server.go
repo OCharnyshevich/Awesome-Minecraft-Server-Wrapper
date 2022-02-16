@@ -1,10 +1,10 @@
 package main
 
 import (
-	"AMSW/minecraft"
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/OCharnyshevich/Awesome-Minecraft-Server-Wrapper/minecraft"
 	"github.com/urfave/cli/v2"
 	"os"
 )

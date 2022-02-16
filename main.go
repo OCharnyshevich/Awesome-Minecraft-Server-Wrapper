@@ -1,8 +1,8 @@
 package main
 
 import (
-	"AMSW/minecraft"
 	"fmt"
+	"github.com/OCharnyshevich/Awesome-Minecraft-Server-Wrapper/minecraft"
 	"log"
 	"os"
 )

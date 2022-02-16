@@ -1,4 +1,6 @@
-# Awesome Minecraft Server Wrapper (AMSW)
+# WIP: Awesome Minecraft Server Wrapper (AMSW)
+The main goal is to make a tool to create and maintain servers easily.
+
 
 ## TODO:
 - Configuration file
