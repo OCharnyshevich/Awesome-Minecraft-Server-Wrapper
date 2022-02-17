@@ -1,42 +1,17 @@
 package main
 
 import (
-	"fmt"
-	"github.com/OCharnyshevich/Awesome-Minecraft-Server-Wrapper/minecraft"
 	"log"
 	"os"
 )
 
 func main() {
-	//ctx, _ := context.WithCancel(context.Background())
-	server := NewServer()
-	//server.hookStdin(ctx)
+	newApp := NewApp()
 
-	err := server.Run(os.Args)
+	NewApp().Shutdown()
+
+	err := newApp.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
-	}
-}
-
-func run() {
-	wpr := minecraft.NewDefaultWrapper()
-	defer wpr.Stop()
-
-	err := wpr.Start()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	for {
-		select {
-		case ev, ok := <-wpr.GameEvents():
-			if !ok {
-				log.Println("Game events channel closed", ev.String())
-				return
-			}
-
-			log.Println("events", ev.String())
-		}
 	}
 }

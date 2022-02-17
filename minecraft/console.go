@@ -3,6 +3,7 @@ package minecraft
 import (
 	"bufio"
 	"fmt"
+	"log"
 )
 
 type Console interface {
@@ -10,15 +11,16 @@ type Console interface {
 	Kill() error
 	WriteCmd(string) error
 	ReadLine() (string, error)
+	Stat() (*Stat, error)
 }
 
 type defaultConsole struct {
-	cmd    Server
+	cmd    Process
 	stdout *bufio.Reader
 	stdin  *bufio.Writer
 }
 
-func newConsole(cmd Server) *defaultConsole {
+func newConsole(cmd Process) *defaultConsole {
 	c := &defaultConsole{
 		cmd: cmd,
 	}
@@ -33,7 +35,7 @@ func (c *defaultConsole) Start() error {
 }
 
 func (c *defaultConsole) Kill() error {
-	fmt.Println("Kill console")
+	log.Println("Kill console")
 	return c.cmd.Kill()
 }
 
@@ -48,4 +50,8 @@ func (c *defaultConsole) WriteCmd(cmd string) error {
 
 func (c *defaultConsole) ReadLine() (string, error) {
 	return c.stdout.ReadString('\n')
+}
+
+func (c defaultConsole) Stat() (*Stat, error) {
+	return c.cmd.Stat()
 }

@@ -2,14 +2,44 @@ package minecraft
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/OCharnyshevich/Awesome-Minecraft-Server-Wrapper/app"
 	"github.com/OCharnyshevich/Awesome-Minecraft-Server-Wrapper/minecraft/events"
 	"io"
-	"time"
+	"log"
+	"strings"
 )
 
+type Wrappers interface {
+	AddWrapper(wrapper *Wrapper) error
+	GetWrapper(name string) (*Wrapper, error)
+	HookStdin(name string)
+}
+
+// Config TODO: Create interface for config
+type Config struct {
+	Name      string `yaml:"name"`
+	Version   string `yaml:"version"`
+	RAMMin    int    `yaml:"ram-min"`
+	RAMMax    int    `yaml:"ram-max"`
+	ServerDir string `yaml:"server-dir"`
+	JavaPath  string `yaml:"java-path"`
+	JarName   string `yaml:"jar-name"`
+	JavaFlags string `yaml:"java-params"`
+	RootDir   string
+}
+
+func (c Config) GetPath() string {
+	return fmt.Sprintf("%s/%s/%s", c.RootDir, c.ServerDir, c.Name)
+}
+
+func (c Config) GetPathJar() string {
+	return fmt.Sprintf("%s/%s", c.GetPath(), c.JarName)
+}
+
 type Wrapper struct {
-	Version        string
+	Config         *Config
 	Console        Console
 	playerList     map[string]string
 	ctxCancelFunc  context.CancelFunc
@@ -17,16 +47,26 @@ type Wrapper struct {
 	loadedChan     chan bool
 }
 
-func NewDefaultWrapper() *Wrapper {
-	config, _ := newConfig()
-	cmd := NewServer(config)
-	console := newConsole(cmd)
-	return NewWrapper(console)
+func NewDefaultWrapper(c *app.Config, name string, version string, javaPath string) *Wrapper {
+	wrapper := newWrapper()
+	wrapper.Config = &Config{
+		Name:      name,
+		Version:   version,
+		RAMMin:    c.RAMMin,
+		RAMMax:    c.RAMMax,
+		RootDir:   c.RootDir,
+		ServerDir: c.ServerDir,
+		JavaPath:  javaPath,
+		JarName:   c.JarName,
+		JavaFlags: c.JavaFlags,
+	}
+
+	wrapper.Console = newConsole(NewProcess(wrapper.Config))
+	return wrapper
 }
 
-func NewWrapper(c Console) *Wrapper {
+func newWrapper() *Wrapper {
 	wpr := &Wrapper{
-		Console:    c,
 		playerList: map[string]string{},
 		ctxCancelFunc: func() {
 			fmt.Println("Call ctxCancelFunc")
@@ -39,37 +79,37 @@ func NewWrapper(c Console) *Wrapper {
 
 // Start will initialize the minecraft java process and start
 // orchestrating the wrapper machine.
-func (w *Wrapper) Start() error {
+func (a *Wrapper) Start() error {
 	ctx, cancel := context.WithCancel(context.Background())
-	w.ctxCancelFunc = cancel
-	go w.processLogEvents(ctx)
-	return w.Console.Start()
+	a.ctxCancelFunc = cancel
+	go a.processLogEvents(ctx)
+	//defer a.Stop() //TODO: bug(me) somehow call this function in the end of the loading
+	return a.Console.Start()
 }
 
 // Stop pipes a 'stop' command to the minecraft java process.
-func (w *Wrapper) Stop() error {
-	return w.Console.WriteCmd("stop")
+func (a *Wrapper) Stop() error {
+	log.Println("Stopping")
+	return a.Console.WriteCmd("stop")
 }
 
-func (w *Wrapper) processLogEvents(ctx context.Context) {
+func (a *Wrapper) processLogEvents(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
 			fmt.Println("processLogEvents stopped")
 			return
-		case <-time.After(500 * time.Millisecond):
-			fmt.Println("done")
 		default:
-			line, err := w.Console.ReadLine()
-			if err == io.EOF {
-				fmt.Println("Server stopped")
-				w.Kill()
+			line, err := a.Console.ReadLine()
+			if errors.Is(err, io.EOF) {
+				fmt.Println("Process stopped")
+				a.Kill()
 				return
 			}
 
-			fmt.Println("Event: ", line)
+			fmt.Printf("event: %s\n", strings.TrimSpace(line))
 
-			//ev, t := w.parseLineToEvent(line)
+			// ev, t := w.parseLineToEvent(line)
 			//switch t {
 			//case events.TypeState:
 			//	w.updateState(ev.(events.StateEvent))
@@ -85,8 +125,8 @@ func (w *Wrapper) processLogEvents(ctx context.Context) {
 
 // Kill the java process, use with caution since it will not trigger a save game.
 // Kill manually perform some cleanup task and hard reset the state to 'offline'.
-func (w *Wrapper) Kill() error {
-	if err := w.Console.Kill(); err != nil {
+func (a *Wrapper) Kill() error {
+	if err := a.Console.Kill(); err != nil {
 		return err
 	}
 
@@ -94,15 +134,15 @@ func (w *Wrapper) Kill() error {
 	//w.machine.SetState(WrapperOffline)
 	// Manually trigger the context cancellation since 'SetState'
 	// does not trigger any callbacks on the fsm.
-	w.ctxCancelFunc()
-	close(w.gameEventsChan)
+	a.ctxCancelFunc()
+	close(a.gameEventsChan)
 	return nil
 }
 
-func (w *Wrapper) GameEvents() <-chan events.GameEvent {
-	return w.gameEventsChan
+func (a *Wrapper) GameEvents() <-chan events.GameEvent {
+	return a.gameEventsChan
 }
 
-func (w *Wrapper) Loaded() <-chan bool {
-	return w.loadedChan
+func (a *Wrapper) Loaded() <-chan bool {
+	return a.loadedChan
 }
