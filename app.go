@@ -14,7 +14,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 type App struct {
@@ -73,9 +72,7 @@ func (a *App) Shutdown() {
 			}
 		}
 
-		log.Printf("\nEverything is shuted down")
-
-		time.Sleep(10 * time.Second)
+		log.Printf("Everything is shuted down")
 		os.Exit(2)
 	}()
 }

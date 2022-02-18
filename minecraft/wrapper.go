@@ -80,9 +80,9 @@ func newWrapper() *Wrapper {
 // Start will initialize the minecraft java process and start
 // orchestrating the wrapper machine.
 func (a *Wrapper) Start() error {
-	ctx, cancel := context.WithCancel(context.Background())
+	_, cancel := context.WithCancel(context.Background())
 	a.ctxCancelFunc = cancel
-	go a.processLogEvents(ctx)
+	//go a.processLogEvents(ctx)
 	//defer a.Stop() //TODO: bug(me) somehow call this function in the end of the loading
 	return a.Console.Start()
 }

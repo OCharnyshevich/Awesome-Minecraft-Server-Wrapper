@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello World</title>
+</head>
+<body>
+<h2>List of posts</h2>
+<ul>
+    {{- /*gotype: github.com/OCharnyshevich/Awesome-Minecraft-Server-Wrapper.Pages*/ -}}
+    {{ if len .List }}
+        {{ range $key, $_ := .List }}
+        <li>
+            <p><b>{{$key}}</b> [<a href="/edit/{{$key}}">edit</a>|<a href="/view/{{$key}}">view</a>]</p>
+        </li>
+        {{ end }}
+    {{else}}
+        <p>Pages not found</p>
+    {{ end }}
+</ul>
+</body>
+</html>

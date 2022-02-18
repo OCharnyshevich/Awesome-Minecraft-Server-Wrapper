@@ -95,26 +95,28 @@ func Server(config *app.Config, versionManifest *minecraft.VersionManifest, wrap
 						return err
 					}
 
-					defer wpr.Stop()
+					//defer wpr.Stop()
 
 					if err := wpr.Start(); err != nil {
 						log.Fatal(err)
 						return nil
 					}
 
-					go wrappers.HookStdin(name)
+					//go wrappers.HookStdin(name)
 
-					for {
-						select {
-						case ev, ok := <-wpr.GameEvents():
-							if !ok {
-								log.Println("Game events channel closed", ev.String())
-								return nil
+					go func() {
+						for {
+							select {
+							case ev, ok := <-wpr.GameEvents():
+								if !ok {
+									log.Println("Game events channel closed", ev.String())
+									return
+								}
+
+								log.Println("events", ev.String())
 							}
-
-							log.Println("events", ev.String())
 						}
-					}
+					}()
 
 					return nil
 				},
